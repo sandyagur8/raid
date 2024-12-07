@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 interface TokenDetails {
+logo_url: string;
   address: string;
   name: string;
   symbol: string;

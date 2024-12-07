@@ -17,6 +17,7 @@ interface Velocity {
 }
 
 interface Fighter {
+  logo_url: string;
   id: string;
   name: string;
   avatar: string;
@@ -44,7 +45,7 @@ const getImagePath = (filename: string) => {
   try {
     return getAssetPath(filename);
   } catch {
-    return getAssetPath('default-token.png');
+    return getAssetPath('doge.png');
   }
 };
 
@@ -72,12 +73,13 @@ const BattleArena: React.FC = () => {
   useEffect(() => {
     if (onChainTokens.length > 0) {
       const newFighters = onChainTokens.map(token => ({
+        logo_url: `assets/${token.logo_url}`, // Use the logo_url directly
         id: token.address,
         name: token.symbol,
-        avatar: getImagePath(`${token.symbol.toLowerCase()}.png`),
+        avatar: token.logo_url, // Use logo_url instead of getImagePath
         isAlive: true,
-        position: { x: 50, y: 50 }, // Initialize position
-        velocity: { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 }, // Random initial velocity
+        position: { x: 50, y: 50 },
+        velocity: { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 },
         health: 100,
         power: 10,
         direction: 'right' as const,
@@ -94,11 +96,12 @@ const BattleArena: React.FC = () => {
           symbol: t.symbol,
           name: t.name,
           balance: t.holders?.toString() || '0',
-          logo: getImagePath(t.symbol.toLowerCase())
+          logo: `assets/${t.logo_url}` // Use logo_url here too
         }))
       }));
     }
   }, [onChainTokens]);
+  
 
 
   // Gradually add more fighters
@@ -306,7 +309,7 @@ const BattleArena: React.FC = () => {
                   {/* Meme Logo */}
                   <div className="w-12 h-12 relative">
                     <Image 
-                      src={fighter.avatar}
+                      src={fighter.logo_url}
                       alt={fighter.name}
                       width={48}
                       height={48}
@@ -406,18 +409,18 @@ const BattleArena: React.FC = () => {
                   className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg"
                 >
                   <div className="flex items-center gap-2">
-                    <Image 
-                      src={fighter.avatar}
-                      alt={fighter.name}
-                      width={24}
-                      height={24}
-                      className="rounded-full"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/assets/default-token.png';
-                      }}
-                      priority
-                    />
+                  <Image 
+  src={fighter.logo_url}
+  alt={fighter.name}
+  width={48}
+  height={48}
+  className="rounded-full object-cover"
+  onError={(e) => {
+    const target = e.target as HTMLImageElement;
+    target.src = '/assets/default-token.png';
+  }}
+  priority
+/>
                     <span className="text-gray-300 text-sm">{fighter.name}</span>
                   </div>
                   <span className="text-blue-400 font-bold text-sm">123 votes</span>
