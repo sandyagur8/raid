@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
-
+import { parseEther } from 'viem';
+import { useScaffoldWriteContract } from '~~/hooks/scaffold-eth';
 interface TokenDetails {
   name: string;
   symbol: string;
@@ -8,14 +9,22 @@ interface TokenDetails {
   description: string;
   logo?: File;
 }
+import  {TOKEN_MINTER_ADDRESS,USDC_ADDRESS,CSAMM_ABI,USDC_ABI} from '~~/utils/viem'
+import { useWriteContract } from 'wagmi'
 
 const MintPage: React.FC = () => {
+  const { writeContract:depositLiquidity } = useWriteContract()
+const { writeContract:approveToken0 } = useWriteContract()
+const { writeContractAsync: mintingToken } = useScaffoldWriteContract("Factory");
+const { writeContractAsync: approveToken } = useScaffoldWriteContract("USDC");
+
   const [tokenDetails, setTokenDetails] = useState<TokenDetails>({
     name: '',
     symbol: '',
     supply: '',
     description: ''
   });
+  const [liquidity, setLiquidity] = useState<string>('');
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,10 +43,41 @@ const MintPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Add your minting logic here
     try {
       // Mint token
-      console.log('Minting token:', tokenDetails);
+      const tokenCreds = await mintingToken({
+        functionName: "CreateToken",
+        args: [tokenDetails.name, tokenDetails.symbol]
+      });
+
+      if (!tokenCreds) throw new Error("Token creation failed");
+
+      const tokenAddress = tokenCreds[0];
+      const poolAddress = tokenCreds[1];
+
+      // Approve USDC
+      await approveToken({
+        functionName: 'approve',
+        args: [poolAddress, parseEther('1000000000')],
+      });
+
+      // Approve new token
+      await approveToken0({
+        address: tokenAddress,
+        abi: USDC_ABI,
+        functionName: 'approve',
+        args: [poolAddress, parseEther('1000000000')],
+      });
+
+      // Add liquidity
+      await depositLiquidity({
+        address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
+        abi: CSAMM_ABI,
+        functionName: 'addLiquidity',
+        args: [parseEther('1000000000'), parseEther(liquidity)],
+      });
+
+      console.log('Token created and liquidity added successfully');
     } catch (error) {
       console.error('Error minting token:', error);
     } finally {
@@ -112,15 +152,14 @@ const MintPage: React.FC = () => {
                   required
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-300">Description</label>
-                <textarea
-                  value={tokenDetails.description}
-                  onChange={e => setTokenDetails(prev => ({ ...prev, description: e.target.value }))}
+                <label className="block text-sm font-medium text-gray-300">Initial Liquidity</label>
+                <input
+                  type="number"
+                  value={liquidity}
+                  onChange={e => setLiquidity(e.target.value)}
                   className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  placeholder="Describe your meme token..."
+                  placeholder="1000000"
                   required
                 />
               </div>

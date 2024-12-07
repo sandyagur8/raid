@@ -14,7 +14,7 @@ contract Factory {
     address[] public  deployed_tokens;
     address public immutable USDC_ADDRESS ;
     function CreateToken(string memory Name,string memory Symbol) public returns(address[] memory){
-            CommoToken newToken = new CommoToken(address(this), Name,Symbol);
+            CommoToken newToken = new CommoToken(msg.sender, Name,Symbol);
             deployed_tokens.push(address(newToken));
             CSAMM pool = new CSAMM(address(newToken),USDC_ADDRESS);
             address[] memory returnArray;

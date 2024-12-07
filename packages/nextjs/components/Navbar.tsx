@@ -42,13 +42,6 @@ export const Navbar = () => {
             ))}
           </div>
 
-          {/* Connect Wallet Button */}
-          <div>
-            <ConnectButton 
-              chainStatus="icon"
-              showBalance={false}
-            />
-          </div>
         </div>
       </div>
     </nav>

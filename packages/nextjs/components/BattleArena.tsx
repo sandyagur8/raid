@@ -1,5 +1,10 @@
 'use client'
 import React, { useState, useEffect } from 'react';
+import { useTokenData } from './../hooks/useTokenData';
+import { TokenData } from './../lib/supabase';
+import Image from "next/image";
+import { getAssetPath } from '../utils/imageLoader';
+import { useOnChainData } from '../hooks/useOnChainData';
 
 interface Position {
   x: number;
@@ -34,55 +39,88 @@ interface VotingModal {
   }>;
 }
 
-const BattleArena: React.FC = () => {
-  const [fighters, setFighters] = useState<Fighter[]>([
-    {
-      id: '1',
-      name: 'PEPE',
-      avatar: '/pepe-logo.png',
-      isAlive: true,
-      position: { x: 20, y: 30 },
-      velocity: { x: 2, y: 1.5 },
-      health: 100,
-      power: 80,
-      direction: 'right',
-      isAttacking: false
-    },
-    {
-      id: '2',
-      name: 'DOGE',
-      avatar: '/doge-logo.png',
-      isAlive: true,
-      position: { x: 80, y: 70 },
-      velocity: { x: -2, y: -1.5 },
-      health: 100,
-      power: 75,
-      direction: 'left',
-      isAttacking: false
-    },
-    {
-      id: '3',
-      name: 'SHIB',
-      avatar: '/shib-logo.png',
-      isAlive: true,
-      position: { x: 50, y: 50 },
-      velocity: { x: 1.5, y: -2 },
-      health: 100,
-      power: 70,
-      direction: 'right',
-      isAttacking: false
-    },
-  ]);
+const getImagePath = (filename: string) => {
+  try {
+    return getAssetPath(filename);
+  } catch {
+    return getAssetPath('default-token.png');
+  }
+};
 
+const BattleArena: React.FC = () => {
+  const { tokens: onChainTokens, loading: onChainLoading } = useOnChainData();
+  const [fighters, setFighters] = useState<Fighter[]>([]);
+  const [activeFighters, setActiveFighters] = useState<Fighter[]>([]);
   const [votingModal, setVotingModal] = useState<VotingModal>({
     isOpen: false,
-    tokens: [
-      { symbol: 'PEPE', name: 'Pepe Token', balance: '1000', logo: '/pepe-logo.png' },
-      { symbol: 'DOGE', name: 'Doge Token', balance: '500', logo: '/doge-logo.png' },
-      { symbol: 'SHIB', name: 'Shiba Token', balance: '2000', logo: '/shib-logo.png' },
-      // Add more tokens as needed
-    ]
+    tokens: []
   });
+
+  // Convert token data to fighters
+  useEffect(() => {
+    if (onChainTokens.length > 0) {
+      const newFighters = onChainTokens.map(token => ({
+        id: token.address,
+        name: token.symbol,
+        avatar: getImagePath(`${token.symbol.toLowerCase()}.png`),
+        isAlive: true,
+        position: { 
+          x: Math.random() * 90 + 5, 
+          y: Math.random() * 90 + 5 
+        },
+        velocity: { 
+          x: (Math.random() - 0.5) * 4, 
+          y: (Math.random() - 0.5) * 4 
+        },
+        health: token.health,
+        power: token.power,
+        direction: 'right' as const,
+        isAttacking: false
+      }));
+
+      setFighters(newFighters);
+      // Start with 2 fighters
+      setActiveFighters(newFighters.slice(0, 2));
+
+      setVotingModal(prev => ({
+        ...prev,
+        tokens: onChainTokens.map(t => ({
+          symbol: t.symbol,
+          name: t.name,
+          balance: t.holders.toString(),
+          logo: getImagePath(t.symbol.toLowerCase())
+        }))
+      }));
+    }
+  }, [onChainTokens]);
+
+  // Gradually add more fighters
+  useEffect(() => {
+    if (fighters.length <= activeFighters.length) return;
+
+    const interval = setInterval(() => {
+      setActiveFighters(current => {
+        if (current.length >= fighters.length) {
+          clearInterval(interval);
+          return current;
+        }
+        
+        // Add next fighter with entrance animation
+        const nextFighter = {
+          ...fighters[current.length],
+          position: {
+            x: 50, // Start from center
+            y: 50
+          },
+          isAttacking: true // Trigger entrance animation
+        };
+        
+        return [...current, nextFighter];
+      });
+    }, 3000); // Add new fighter every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [fighters]);
 
   // Constants for physics
   const BOUNCE_FACTOR = 0.9;
@@ -105,7 +143,7 @@ const BattleArena: React.FC = () => {
 
   // Update fighter positions and handle collisions
   const updateFighterPositions = () => {
-    setFighters(prevFighters => {
+    setActiveFighters(prevFighters => {
       const newFighters = prevFighters.map(fighter => {
         // Update position based on velocity
         let newX = fighter.position.x + fighter.velocity.x;
@@ -139,7 +177,7 @@ const BattleArena: React.FC = () => {
           position: { x: newX, y: newY },
           velocity: { x: newVelX, y: newVelY },
           direction: newVelX > 0 ? 'right' : 'left' as const,
-          isAttacking: false
+          isAttacking: fighter.isAttacking
         };
       });
 
@@ -152,11 +190,9 @@ const BattleArena: React.FC = () => {
             newFighters[i].velocity = { ...newFighters[j].velocity };
             newFighters[j].velocity = { ...temp };
             
-            // Trigger attack animation and reduce health
+            // Trigger attack animation
             newFighters[i].isAttacking = true;
             newFighters[j].isAttacking = true;
-            newFighters[i].health = Math.max(0, newFighters[i].health - 2);
-            newFighters[j].health = Math.max(0, newFighters[j].health - 2);
 
             // Add some random velocity after collision
             newFighters[i].velocity.x += (Math.random() - 0.5) * 2;
@@ -166,6 +202,19 @@ const BattleArena: React.FC = () => {
           }
         }
       }
+
+      // Reset attack state after a short delay
+      newFighters.forEach(fighter => {
+        if (fighter.isAttacking) {
+          setTimeout(() => {
+            setActiveFighters(current =>
+              current.map(f =>
+                f.id === fighter.id ? { ...f, isAttacking: false } : f
+              )
+            );
+          }, 500);
+        }
+      });
 
       return newFighters;
     });
@@ -179,13 +228,32 @@ const BattleArena: React.FC = () => {
 
   const handleVote = async (symbol: string) => {
     try {
-      // Add your voting logic here
-      console.log(`Voting for ${symbol}`);
+      const token = onChainTokens.find(t => t.symbol === symbol);
+      if (!token) return;
+
+      const response = await fetch('/api/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token_id: token.address,
+          voter_address: 'user_address', // Replace with actual user address
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to vote');
+      
       setVotingModal(prev => ({ ...prev, isOpen: false }));
     } catch (error) {
       console.error('Error voting:', error);
     }
   };
+
+  if (onChainLoading) {
+    return <div className="flex items-center justify-center h-full">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500" />
+    </div>;
+  }
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 h-full relative">
@@ -196,15 +264,14 @@ const BattleArena: React.FC = () => {
         </span>
       </div>
 
-      <div className="flex h-[calc(100%-60px)]">
-        {/* Main battle area */}
+      <div className="flex h-[calc(100%-60px)] gap-4">
         <div className="flex-1 relative">
-          {/* Battle Stage */}
           <div className="absolute inset-0 bg-gray-900/50 rounded-lg overflow-hidden">
-            {fighters.map((fighter) => (
+            {activeFighters.map((fighter) => (
               <div 
                 key={fighter.id} 
-                className="absolute transition-all duration-100"
+                className={`absolute transition-all duration-300
+                  ${fighter.isAttacking ? 'scale-110' : 'scale-100'}`}
                 style={{
                   left: `${fighter.position.x}%`,
                   top: `${fighter.position.y}%`,
@@ -215,11 +282,17 @@ const BattleArena: React.FC = () => {
                 <div className={`relative ${fighter.direction === 'left' ? '-scale-x-100' : ''}`}>
                   {/* Meme Logo */}
                   <div className="w-12 h-12 relative">
-                    <img 
-                      src={fighter.avatar} 
+                    <Image 
+                      src={fighter.avatar}
                       alt={fighter.name}
-                      className={`w-full h-full rounded-full object-cover
-                        ${fighter.isAttacking ? 'animate-bounce' : ''}`}
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/assets/default-token.png';
+                      }}
+                      priority
                     />
                     
                     {/* Sword */}
@@ -284,14 +357,16 @@ const BattleArena: React.FC = () => {
           </div>
         </div>
 
-        {/* Replace eliminated section with voting section */}
-        <div className="w-[200px] border-l border-gray-700 pl-4">
-          <h4 className="text-white text-lg font-semibold mb-4">Support Your Meme</h4>
+        <div className="w-[200px] border-l border-gray-700 pl-4 flex flex-col min-h-0">
+          <h4 className="text-white text-lg font-semibold mb-4 flex-shrink-0">
+            Support Your Meme
+          </h4>
+
           <button
             onClick={() => setVotingModal(prev => ({ ...prev, isOpen: true }))}
             className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 
               text-white rounded-lg transition-colors font-semibold
-              flex items-center justify-center gap-2"
+              flex items-center justify-center gap-2 flex-shrink-0 mb-4"
           >
             <span>Cast Vote</span>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,14 +375,32 @@ const BattleArena: React.FC = () => {
             </svg>
           </button>
 
-          {/* Vote count display */}
-          <div className="mt-6 space-y-4">
-            {fighters.map(fighter => (
-              <div key={fighter.id} className="flex items-center justify-between">
-                <span className="text-gray-300">{fighter.name}</span>
-                <span className="text-blue-400 font-bold">123 votes</span>
-              </div>
-            ))}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="space-y-3">
+              {activeFighters.map(fighter => (
+                <div 
+                  key={fighter.id} 
+                  className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Image 
+                      src={fighter.avatar}
+                      alt={fighter.name}
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/assets/default-token.png';
+                      }}
+                      priority
+                    />
+                    <span className="text-gray-300 text-sm">{fighter.name}</span>
+                  </div>
+                  <span className="text-blue-400 font-bold text-sm">123 votes</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -337,14 +430,23 @@ const BattleArena: React.FC = () => {
                     transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={token.logo} 
-                      alt={token.name} 
-                      className="w-10 h-10 rounded-full"
+                    <Image 
+                      src={token.logo}
+                      alt={token.name}
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/assets/default-token.png';
+                      }}
+                      priority
                     />
                     <div className="text-left">
                       <div className="text-white font-semibold">{token.name}</div>
-                      <div className="text-gray-400 text-sm">Balance: {token.balance} {token.symbol}</div>
+                      <div className="text-gray-400 text-sm">
+                        Balance: {token.balance} {token.symbol}
+                      </div>
                     </div>
                   </div>
                   <span className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
