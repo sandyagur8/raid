@@ -1,61 +1,55 @@
 'use client'
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-interface Community {
+interface Token {
   id: string;
   rank: number;
   name: string;
-  score: number;
+  market_cap: number;
   change?: 'up' | 'down' | 'same';
   previousRank?: number;
 }
 
 const LeaderBoard: React.FC = () => {
-  const [communities, setCommunities] = useState<Community[]>(
-    Array(25).fill(null).map((_, index) => ({
-      id: `community-${index}`,
-      rank: index + 1,
-      name: `Community ${index + 1}`,
-      score: Math.floor(1000 - (index * 25) + Math.random() * 50),
-      change: 'same',
-      previousRank: index + 1
-    }))
-  );
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Update scores and ranks periodically
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCommunities(prevCommunities => {
-        // Clone the previous communities
-        const newCommunities = [...prevCommunities];
-
-        // Randomly update scores
-        newCommunities.forEach(community => {
-          if (Math.random() < 0.3) { // 30% chance to change score
-            const scoreChange = Math.floor(Math.random() * 50) - 25;
-            community.score = Math.max(0, community.score + scoreChange);
-          }
-        });
-
-        // Sort by score and update ranks
-        newCommunities.sort((a, b) => b.score - a.score);
-        
-        // Update ranks and change indicators
-        newCommunities.forEach((community, index) => {
-          const newRank = index + 1;
-          community.previousRank = community.rank;
-          community.rank = newRank;
-          community.change = 
-            newRank < community.previousRank ? 'up' :
-            newRank > community.previousRank ? 'down' : 'same';
-        });
-
-        return newCommunities;
-      });
-    }, 2000); // Update every 2 seconds
-
+    fetchTokens();
+    const interval = setInterval(fetchTokens, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchTokens = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tokens')
+        .select('id, name, market_cap')
+        .order('market_cap', { ascending: true })
+        .limit(25);
+
+      if (error) throw error;
+
+      if (data) {
+        const rankedData = data.map((token, index) => ({
+          ...token,
+          rank: index + 1,
+          market_cap: token.market_cap / 1000000, // Convert to millions
+          previousRank: tokens[index]?.rank || index + 1,
+          change: tokens[index]?.rank 
+            ? (index + 1 < tokens[index].rank ? 'up' : 
+               index + 1 > tokens[index].rank ? 'down' : 'same')
+            : 'same'
+        }));
+        setTokens(rankedData);
+      }
+    } catch (error) {
+      console.error('Error fetching tokens:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getFontSize = (rank: number): string => {
     if (rank === 1) return 'text-xl';
@@ -80,7 +74,7 @@ const LeaderBoard: React.FC = () => {
     return 'text-gray-400';
   };
 
-  const getChangeIcon = (change: Community['change']) => {
+  const getChangeIcon = (change: Token['change']) => {
     switch (change) {
       case 'up':
         return <span className="text-green-500">↑</span>;
@@ -91,67 +85,62 @@ const LeaderBoard: React.FC = () => {
     }
   };
 
-  const getRowStyle = (community: Community) => {
+  const getRowStyle = (token: Token) => {
     const baseStyle = `flex items-center justify-between p-2.5 border-b border-gray-700/50 
       hover:bg-gray-700/30 transition-all duration-500 relative
-      ${getOpacity(community.rank)}`;
+      ${getOpacity(token.rank)}`;
 
-    const moveDistance = community.previousRank && community.rank !== community.previousRank
-      ? `${(community.previousRank - community.rank) * 40}px`
+    const moveDistance = token.previousRank && token.rank !== token.previousRank
+      ? `${(token.previousRank - token.rank) * 40}px`
       : '0px';
 
     return `${baseStyle} transform translate-y-[${moveDistance}]`;
   };
 
   return (
-    <div className="text-white">
-      <h2 className="text-xl font-bold mb-4">Top 25 Communities</h2>
+    <div className="text-white max-w-md">
+      <h2 className="text-xl font-bold mb-4">Top 25 Tokens</h2>
       <div className="h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-        {communities.map((community) => (
-          <div 
-            key={community.id} 
-            className={getRowStyle(community)}
-          >
-            {/* Rank with animation */}
-            <div className={`flex items-center gap-2 ${getFontSize(community.rank)}`}>
-              <span className={`font-bold w-8 ${getRankColor(community.rank)}
-                transition-all duration-500`}>
-                #{community.rank}
-              </span>
-              <div className="flex flex-col">
-                <span className={`font-semibold ${
-                  community.rank <= 3 ? 'font-bold' : ''
-                } transition-all duration-300`}>
-                  {community.name}
+        {loading ? (
+          <div className="text-center p-4">Loading...</div>
+        ) : (
+          tokens.map((token) => (
+            <div 
+              key={token.id} 
+              className={getRowStyle(token)}
+            >
+              <div className={`flex items-center gap-3 flex-1 min-w-0 ${getFontSize(token.rank)}`}>
+                <span className={`font-bold w-10 flex-shrink-0 ${getRankColor(token.rank)}
+                  transition-all duration-500`}>
+                  #{token.rank}
                 </span>
-                {community.rank <= 3 && (
-                  <span className="text-xs text-gray-400">
-                    Top Performer
+                <div className="flex flex-col min-w-0">
+                  <span className={`font-semibold truncate ${
+                    token.rank <= 3 ? 'font-bold' : ''
+                  } transition-all duration-300`}>
+                    {token.name}
                   </span>
-                )}
+                  {token.rank <= 3 && (
+                    <span className="text-xs text-gray-400">
+                      Top Performer
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Score with animation */}
-            <div className="flex items-center gap-2">
-              <span className={`font-bold transition-all duration-300 ${
-                community.rank <= 3 ? 'text-green-400' : 'text-green-500/80'
-              }`}>
-                {community.score.toLocaleString()}
-              </span>
-              <div className="w-4 transition-all duration-300">
-                {getChangeIcon(community.change)}
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span className={`font-bold transition-all duration-300 ${
+                  token.rank <= 3 ? 'text-green-400' : 'text-green-500/80'
+                }`}>
+                  {token.market_cap.toLocaleString()} M
+                </span>
+                <div className="w-4 transition-all duration-300">
+                  {getChangeIcon(token.change)}
+                </div>
               </div>
-              
-              {/* Movement indicator */}
-              {community.change !== 'same' && (
-                <div className={`absolute right-0 h-full w-1 transition-all duration-300
-                  ${community.change === 'up' ? 'bg-green-500/20' : 'bg-red-500/20'}`}
-                />
-              )}
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

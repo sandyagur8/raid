@@ -3301,9 +3301,9 @@ __metadata:
   linkType: hard
 
 "@ungap/structured-clone@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@ungap/structured-clone@npm:1.2.0"
-  checksum: 4f656b7b4672f2ce6e272f2427d8b0824ed11546a601d8d5412b9d7704e83db38a8d9f402ecdf2b9063fc164af842ad0ec4a55819f621ed7e7ea4d1efcc74524
+  version: 1.2.1
+  resolution: "@ungap/structured-clone@npm:1.2.1"
+  checksum: 1e3b9fef293118861f0b2159b3695fc7f3793c0707095888ebb3ac7183f78c390e68f04cd4b4cf9ac979ae0da454505e08b3aae887cdd639609a3fe529e19e59
   languageName: node
   linkType: hard
 
@@ -12095,6 +12095,7 @@ __metadata:
     husky: ~8.0.3
     lint-staged: ~13.2.2
     tailwind-scrollbar: ^3.1.0
+    tailwindcss: ^3.4.16
   languageName: unknown
   linkType: soft
 
@@ -12922,7 +12923,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:~3.4.11":
+"tailwindcss@npm:^3.4.16, tailwindcss@npm:~3.4.11":
   version: 3.4.16
   resolution: "tailwindcss@npm:3.4.16"
   dependencies:
