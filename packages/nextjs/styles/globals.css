@@ -1,32 +1,55 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root,
-[data-theme] {
-  background: oklch(var(--b2));
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 17, 24, 39;
+  --background-end-rgb: 17, 24, 39;
 }
 
 body {
-  min-height: 100vh;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
 }
 
-h1,
-h2,
-h3,
-h4 {
-  margin-bottom: 0.5rem;
-  line-height: 1;
+/* Add custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-p {
-  margin: 1rem 0;
+::-webkit-scrollbar-track {
+  background: #1f2937;
 }
 
-.btn {
-  @apply shadow-md;
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
 }
 
-.btn.btn-ghost {
-  @apply shadow-none;
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Add smooth transitions */
+.page-transition {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Add container padding */
+.container {
+  @apply px-4 mx-auto;
+  max-width: 1400px;
+}
+
+/* Add custom focus styles */
+button:focus, 
+input:focus, 
+select:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
 }
