@@ -216,9 +216,13 @@ const TweetFeed: React.FC = () => {
         {visibleTweets.map((tweet, index) => (
           <div 
             key={tweet.id}
-            className="border-b border-gray-700 p-4 hover:bg-gray-700/50 transition-all duration-300"
+            className={`border-b border-gray-700 p-4 hover:bg-gray-700/50 
+              transition-all duration-300 animate-slide-in`}
             style={{
-              animation: `slideIn 0.5s ease-out ${index * 0.1}s both`
+              animationDelay: `${index * 0.1}s`,
+              opacity: 0,
+              animation: `slideIn 0.5s ease-out ${index * 0.1}s forwards, 
+                         fadeIn 0.3s ease-out ${index * 0.1}s forwards`
             }}
           >
             <div className="flex items-start gap-3">

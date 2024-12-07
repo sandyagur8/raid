@@ -23,9 +23,11 @@ export function useOnChainData() {
   useEffect(() => {
     const fetchOnChainData = async () => {
       try {
-        const response = await fetch('/api/tokens/onchain');
+        const response = await fetch('/api/tokens');
+        console.log(response);
         if (!response.ok) throw new Error('Failed to fetch on-chain data');
         const data = await response.json();
+        console.log(data)
         setTokens(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch on-chain data');

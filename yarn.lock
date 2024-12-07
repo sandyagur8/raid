@@ -2569,6 +2569,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tailwindcss/forms@npm:^0.5.9":
+  version: 0.5.9
+  resolution: "@tailwindcss/forms@npm:0.5.9"
+  dependencies:
+    mini-svg-data-uri: ^1.2.3
+  peerDependencies:
+    tailwindcss: ">=3.0.0 || >= 3.0.0-alpha.1 || >= 4.0.0-alpha.20"
+  checksum: b242012974e1727d6c220076a713cd98218f0060a31fe09baf9cf712089fedc3c450242cf29b4b19ca2f7a96f99e11692b75a142f5f148709f500f8a61687f17
+  languageName: node
+  linkType: hard
+
 "@tanstack/query-core@npm:5.59.20":
   version: 5.59.20
   resolution: "@tanstack/query-core@npm:5.59.20"
@@ -9793,6 +9804,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mini-svg-data-uri@npm:^1.2.3":
+  version: 1.4.4
+  resolution: "mini-svg-data-uri@npm:1.4.4"
+  bin:
+    mini-svg-data-uri: cli.js
+  checksum: 997f1fbd8d59a70f03761e18626d335197a3479cb9d1ff75678e4b64b864d32a0b8fc18115eabde035e5299b8b4a354a78e57dd6ac10f9d604162a6170898d09
+  languageName: node
+  linkType: hard
+
 "minimalistic-assert@npm:^1.0.0, minimalistic-assert@npm:^1.0.1":
   version: 1.0.1
   resolution: "minimalistic-assert@npm:1.0.1"
@@ -12071,8 +12091,10 @@ __metadata:
   resolution: "se-2@workspace:."
   dependencies:
     "@supabase/supabase-js": ^2.47.2
+    "@tailwindcss/forms": ^0.5.9
     husky: ~8.0.3
     lint-staged: ~13.2.2
+    tailwind-scrollbar: ^3.1.0
   languageName: unknown
   linkType: soft
 
@@ -12888,6 +12910,15 @@ __metadata:
     string-width: ^4.2.3
     strip-ansi: ^6.0.1
   checksum: f54a7d1c11cda8c676e1e9aff5e723646905ed4579cca14b3ce12d2b12eac3e18f5dbe2549fe0b79697164858e18961145db4dd0660bbeb0fb4032af0aaf32b4
+  languageName: node
+  linkType: hard
+
+"tailwind-scrollbar@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "tailwind-scrollbar@npm:3.1.0"
+  peerDependencies:
+    tailwindcss: 3.x
+  checksum: a3aca614824ae655ff9b8fa6341e54cd543d68bf107c41cb45cbdcb80e4dff4169250bd13c50beb4f8690ca90392da6452ee4ade0e0e8203ef38aacac176173d
   languageName: node
   linkType: hard
 

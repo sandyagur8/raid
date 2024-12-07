@@ -9,14 +9,14 @@ interface TokenDetails {
   description: string;
   logo?: File;
 }
-import  {TOKEN_MINTER_ADDRESS,USDC_ADDRESS,CSAMM_ABI,USDC_ABI} from '~~/utils/viem'
+import  {TOKEN_MINTER_ADDRESS,USDC_ADDRESS,CSAMM_ABI,USDC_ABI, TOKEN_MINTER_ABI} from '~~/utils/viem'
 import { useWriteContract } from 'wagmi'
 
 const MintPage: React.FC = () => {
-  const { writeContract:depositLiquidity } = useWriteContract()
+const { writeContract:depositLiquidity } = useWriteContract()
 const { writeContract:approveToken0 } = useWriteContract()
-const { writeContractAsync: mintingToken } = useScaffoldWriteContract("Factory");
-const { writeContractAsync: approveToken } = useScaffoldWriteContract("USDC");
+const { writeContractAsync: mintingToken } =  useWriteContract()
+const { writeContractAsync: approveToken } =  useWriteContract()
 
   const [tokenDetails, setTokenDetails] = useState<TokenDetails>({
     name: '',
@@ -45,18 +45,23 @@ const { writeContractAsync: approveToken } = useScaffoldWriteContract("USDC");
     setIsLoading(true);
     try {
       // Mint token
-      const tokenCreds = await mintingToken({
+      const { result: tokenCreds } = await mintingToken({
+        address: TOKEN_MINTER_ADDRESS,
+        abi: TOKEN_MINTER_ABI,
         functionName: "CreateToken",
         args: [tokenDetails.name, tokenDetails.symbol]
       });
 
-      if (!tokenCreds) throw new Error("Token creation failed");
+      if (!tokenCreds || !Array.isArray(tokenCreds) || tokenCreds.length < 2) {
+        throw new Error("Invalid token creation response");
+      }
 
-      const tokenAddress = tokenCreds[0];
-      const poolAddress = tokenCreds[1];
+      const [tokenAddress, poolAddress] = tokenCreds;
 
       // Approve USDC
       await approveToken({
+        address: USDC_ADDRESS,
+        abi: USDC_ABI,
         functionName: 'approve',
         args: [poolAddress, parseEther('1000000000')],
       });
@@ -71,7 +76,7 @@ const { writeContractAsync: approveToken } = useScaffoldWriteContract("USDC");
 
       // Add liquidity
       await depositLiquidity({
-        address: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
+        address: poolAddress,
         abi: CSAMM_ABI,
         functionName: 'addLiquidity',
         args: [parseEther('1000000000'), parseEther(liquidity)],

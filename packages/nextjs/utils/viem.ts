@@ -327,8 +327,8 @@ export const USDC_ABI =  [
       "type": "function"
     }
   ]
-export const TOKEN_MINTER_ADDRESS= "0xb4856f47D8C91852527FecfDA6E5ef6A2E1b67Ee"
-export const USDC_ADDRESS= "0xd966BCCC5F12399878161db419CF67f36Bda663A"
+export const TOKEN_MINTER_ADDRESS = "0xb4856f47D8C91852527FecfDA6E5ef6A2E1b67Ee";
+export const USDC_ADDRESS = "0xd966BCCC5F12399878161db419CF67f36Bda663A";
 // ABI snippets for the functions we need
 export const TOKEN_MINTER_ABI =[
     {

@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useTokenData } from './../hooks/useTokenData';
-import { TokenData } from './../lib/supabase';
+import { supabase } from './../lib/supabase';
 import Image from "next/image";
 import { getAssetPath } from '../utils/imageLoader';
 import { useOnChainData } from '../hooks/useOnChainData';
@@ -27,6 +27,7 @@ interface Fighter {
   power: number;
   direction: 'left' | 'right';
   isAttacking: boolean;
+  isNew: boolean;
 }
 
 interface VotingModal {
@@ -48,7 +49,7 @@ const getImagePath = (filename: string) => {
 };
 
 const BattleArena: React.FC = () => {
-  const { tokens: onChainTokens, loading: onChainLoading } = useOnChainData();
+  const { tokens: onChainTokens, loading: onChainLoading, error } = useOnChainData();
   const [fighters, setFighters] = useState<Fighter[]>([]);
   const [activeFighters, setActiveFighters] = useState<Fighter[]>([]);
   const [votingModal, setVotingModal] = useState<VotingModal>({
@@ -56,7 +57,18 @@ const BattleArena: React.FC = () => {
     tokens: []
   });
 
-  // Convert token data to fighters
+  // Add error logging
+  useEffect(() => {
+    if (error) {
+      console.error('BattleArena Error:', error);
+    }
+  }, [error]);
+
+  // Add data logging
+  useEffect(() => {
+    console.log('Tokens:', onChainTokens);
+  }, [onChainTokens]);
+
   useEffect(() => {
     if (onChainTokens.length > 0) {
       const newFighters = onChainTokens.map(token => ({
@@ -64,35 +76,30 @@ const BattleArena: React.FC = () => {
         name: token.symbol,
         avatar: getImagePath(`${token.symbol.toLowerCase()}.png`),
         isAlive: true,
-        position: { 
-          x: Math.random() * 90 + 5, 
-          y: Math.random() * 90 + 5 
-        },
-        velocity: { 
-          x: (Math.random() - 0.5) * 4, 
-          y: (Math.random() - 0.5) * 4 
-        },
-        health: token.health,
-        power: token.power,
+        position: { x: 50, y: 50 }, // Initialize position
+        velocity: { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 }, // Random initial velocity
+        health: 100,
+        power: 10,
         direction: 'right' as const,
-        isAttacking: false
+        isAttacking: false,
+        isNew: false
       }));
-
+  
       setFighters(newFighters);
-      // Start with 2 fighters
       setActiveFighters(newFighters.slice(0, 2));
-
+  
       setVotingModal(prev => ({
         ...prev,
         tokens: onChainTokens.map(t => ({
           symbol: t.symbol,
           name: t.name,
-          balance: t.holders.toString(),
+          balance: t.holders?.toString() || '0',
           logo: getImagePath(t.symbol.toLowerCase())
         }))
       }));
     }
   }, [onChainTokens]);
+
 
   // Gradually add more fighters
   useEffect(() => {
@@ -112,12 +119,24 @@ const BattleArena: React.FC = () => {
             x: 50, // Start from center
             y: 50
           },
-          isAttacking: true // Trigger entrance animation
+          isAttacking: true, // Trigger attack animation
+          isNew: true, // Add this flag for entrance animation
         };
+        
+        // Remove isNew flag after animation
+        setTimeout(() => {
+          setActiveFighters(prev => 
+            prev.map(f => 
+              f.id === nextFighter.id 
+                ? { ...f, isNew: false }
+                : f
+            )
+          );
+        }, 500);
         
         return [...current, nextFighter];
       });
-    }, 3000); // Add new fighter every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [fighters]);
@@ -271,11 +290,15 @@ const BattleArena: React.FC = () => {
               <div 
                 key={fighter.id} 
                 className={`absolute transition-all duration-300
-                  ${fighter.isAttacking ? 'scale-110' : 'scale-100'}`}
+                  ${fighter.isAttacking ? 'scale-110 animate-bounce-in' : 'scale-100'}
+                  ${fighter.isNew ? 'animate-fade-in' : ''}`}
                 style={{
                   left: `${fighter.position.x}%`,
                   top: `${fighter.position.y}%`,
-                  transform: 'translate(-50%, -50%)'
+                  transform: 'translate(-50%, -50%)',
+                  animation: fighter.isNew 
+                    ? 'bounceIn 0.5s ease-out, fadeIn 0.3s ease-out' 
+                    : undefined
                 }}
               >
                 {/* Character Container */}
