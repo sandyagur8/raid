@@ -1,19 +1,27 @@
 import React from 'react';
+import { useTokenData } from '../../packages/nextjs/hooks/useTokenData';
 import '../styles/LeaderBoard.css';
 
 const LeaderBoard = () => {
+  const { tokens, loading, error } = useTokenData();
+
   return (
     <div className="leaderboard">
-      <h2>Top 25 Communities</h2>
+      <h2>Top 25 Tokens</h2>
       <div className="leaderboard-list">
-        {/* This will be populated with real data */}
-        {Array(25).fill(null).map((_, index) => (
-          <div key={index} className="leaderboard-item">
-            <span className="rank">{index + 1}</span>
-            <span className="community-name">Community {index + 1}</span>
-            <span className="score">1000</span>
-          </div>
-        ))}
+        {loading ? (
+          <div className="loading">Loading...</div>
+        ) : error ? (
+          <div className="error">Error loading tokens</div>
+        ) : (
+          tokens.map((token) => (
+            <div key={token.rank} className="leaderboard-item">
+              <span className="rank">{token.rank}</span>
+              <span className="community-name">{token.name}</span>
+              <span className="score">{token.marketCap.toLocaleString()} M</span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
