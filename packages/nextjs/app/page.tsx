@@ -7,9 +7,12 @@ const HomePage: React.FC = () => {
   const { tokens, loading, error } = useOnChainData();
 
   // Sort tokens by market cap for leaderboard
-  const sortedTokens = [...(tokens || [])].sort((a, b) => b.marketCap - a.marketCap);
+  const sortedTokens = [...(tokens || [])].sort((a, b) => 
+    (b.marketCap || 0) - (a.marketCap || 0)
+  );
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (!num) return '$0.00';
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
     return `$${num.toFixed(2)}`;
@@ -89,7 +92,7 @@ const HomePage: React.FC = () => {
                     <div>
                       <div className="font-semibold text-white">{token.name}</div>
                       <div className="text-sm text-gray-400">
-                        Holders: {token.holders.toLocaleString()}
+                        Holders: {token.holders?.toLocaleString() || '0'}
                       </div>
                     </div>
                   </div>
@@ -98,7 +101,7 @@ const HomePage: React.FC = () => {
                       {formatNumber(token.marketCap)}
                     </div>
                     <div className="text-sm text-gray-400">
-                      Power: {token.power}
+                      Power: {token.power || 0}
                     </div>
                   </div>
                 </div>
@@ -121,7 +124,7 @@ const HomePage: React.FC = () => {
                   Total Tokens
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-white">
-                  {tokens.length}
+                  {tokens?.length || 0}
                 </dd>
               </div>
             </div>
@@ -131,7 +134,7 @@ const HomePage: React.FC = () => {
                   Total Holders
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-white">
-                  {tokens.reduce((acc, token) => acc + token.holders, 0).toLocaleString()}
+                  {tokens?.reduce((acc, token) => acc + (token.holders || 0), 0).toLocaleString() || '0'}
                 </dd>
               </div>
             </div>
@@ -141,7 +144,7 @@ const HomePage: React.FC = () => {
                   Total Value Locked
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-white">
-                  {formatNumber(tokens.reduce((acc, token) => acc + token.marketCap, 0))}
+                  {formatNumber(tokens?.reduce((acc, token) => acc + (token.marketCap || 0), 0))}
                 </dd>
               </div>
             </div>
