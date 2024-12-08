@@ -1,10 +1,15 @@
 import { createPublicClient, http } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { baseSepolia, optimism } from 'viem/chains';
 
 // Create a public client for Base network
 export const publicClient = createPublicClient({
   chain: baseSepolia,
   transport: http('https://sepolia.base.org'),
+});
+
+export const publicClientop = createPublicClient({
+  chain: optimism,
+  transport: http(),
 });
 
 // Contract addresses
@@ -574,7 +579,7 @@ export const CSAMM_ABI = [
       "type": "function"
     }
   ] as const; 
-export const LEADERBOARD_ADDRESS="0xC1F899a74D910d30Dd4d80bB0a80633693e1344f" 
+export const LEADERBOARD_ADDRESS="0xd966BCCC5F12399878161db419CF67f36Bda663A" 
 export const LEADERBOARD_ABI = [
     {
       "anonymous": false,

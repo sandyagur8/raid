@@ -5,7 +5,7 @@ contract Leaderboard {
 
     event LeaderboardUpdated(address[] newLeaderboard, address updater);
 
-    address[] private leaderboard;
+    address[] public leaderboard;
 
     function setLeaderboard(address[] memory new_leaderboard) public {
         leaderboard = new_leaderboard;

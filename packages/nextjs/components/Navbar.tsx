@@ -9,7 +9,6 @@ export const Navbar = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Battle Arena', path: '/battle' },
-    { name: 'Swap', path: '/swap' },
     { name: 'Create Token', path: '/mint' },
   ];
 

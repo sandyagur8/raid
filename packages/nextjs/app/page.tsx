@@ -114,42 +114,6 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
         )}
-
-        {/* Stats */}
-        {!loading && !error && (
-          <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-gray-400 truncate">
-                  Total Tokens
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-white">
-                  {tokens?.length || 0}
-                </dd>
-              </div>
-            </div>
-            <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-gray-400 truncate">
-                  Total Holders
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-white">
-                  {tokens?.reduce((acc, token) => acc + (token.holders || 0), 0).toLocaleString() || '0'}
-                </dd>
-              </div>
-            </div>
-            <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-gray-400 truncate">
-                  Total Value Locked
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-white">
-                  {formatNumber(tokens?.reduce((acc, token) => acc + (token.marketCap || 0), 0))}
-                </dd>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
